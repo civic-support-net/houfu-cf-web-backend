@@ -3,8 +3,6 @@ export type Config = {
   logSheetId: string
   managerLineSecret: string
   managerLineAccessToken: string
-  recipientLineSecret: string
-  recipientLineAccessToken: string
   githubUsername: string
   githubRepository: string
   githubYaml: string
@@ -27,8 +25,6 @@ export const loadConfig = (): Config => {
       logSheetId: process.env.LOG_SHEET_ID,
       managerLineSecret: process.env.MANAGER_LINE_SECRET,
       managerLineAccessToken: process.env.MANAGER_LINE_TOKEN,
-      recipientLineSecret: process.env.RECIPIENT_LINE_SECRET,
-      recipientLineAccessToken: process.env.RECIPIENT_LINE_TOKEN,
       githubUsername: process.env.GITHUB_USERNAME,
       githubRepository: process.env.GITHUB_REPOSITORY,
       githubYaml: process.env.GITHUB_YAML,

@@ -2,20 +2,12 @@ import { postStatusType } from '../consts/constants'
 
 export type Post = {
   id: string
-  stationId: string
-  recipientGroupId: string
-  recipientGroupName: string
-  recipientId: string
-  approvedManagerId: string
-  rejectedManagerId: string
+  managerId: string
+  position: string
   status: postStatusType
-  subject: string
-  body: string
-  images: string[]
-  feedback: string
-  isRecipientWorking: boolean
+  imageUrl: string
+  isWorkingInProgress: boolean
   createdAt: Date
-  approvedAt: Date
-  rejectedAt: Date
   publishedAt: Date
+  canceledAt: Date
 }

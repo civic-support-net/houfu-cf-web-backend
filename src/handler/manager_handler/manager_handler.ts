@@ -46,14 +46,12 @@ import {
   rejectedPostForRecipient,
   askRejectedReason,
 } from './post'
-import { GetRecipientById, updateRecipient } from '../../lib/firestore/recipient'
 import { insertLog } from '../../lib/sheet/log'
 import { action } from '../../consts/log'
 import { deletePostData } from '../../lib/storage/post'
 import { postSummary } from '../../lib/sheet/summary'
 import moment from 'moment'
 import { deploy } from '../../lib/github/github'
-import { getStationById } from '../../lib/firestore/station'
 
 export class managerLineHandler {
   constructor(private managerClient: Client, private recipientClient: Client) {}

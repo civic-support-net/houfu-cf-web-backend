@@ -1,9 +1,9 @@
 import { db } from './firestore'
 import { DocumentData, QueryDocumentSnapshot } from 'firebase-admin/firestore'
 import { postStatus } from '../../consts/constants'
-import { Recipient } from '../../types/recipient'
 import { Post } from '../../types/post'
 import moment from 'moment'
+import { Manager } from '../../types/managers'
 
 export const GetPostById = async (id: string) => {
   let post: Post = (
@@ -12,13 +12,13 @@ export const GetPostById = async (id: string) => {
   return post
 }
 
-export const getWorkingPostByRecipientId = async (id: string) => {
+export const getWorkingPostByManagerId = async (id: string) => {
   let post = undefined
   ;(
     await db
       .collection('posts')
-      .where('recipientId', '==', id)
-      .where('isRecipientWorking', '==', true)
+      .where('managerId', '==', id)
+      .where('isWorkingInProgress', '==', true)
       .withConverter<Post>(postConverter)
       .get()
   ).forEach((doc) => {
@@ -59,67 +59,43 @@ const postConverter = {
   toFirestore(post: Post): DocumentData {
     return {
       id: post.id,
-      stationId: post.stationId,
-      recipientGroupId: post.recipientGroupId,
-      recipientGroupName: post.recipientGroupName,
-      recipientId: post.recipientId,
-      approvedManagerId: post.approvedManagerId,
-      rejectedManagerId: post.rejectedManagerId,
+      managerId: post.managerId,
+      position: post.position,
       status: post.status,
-      subject: post.subject,
-      body: post.body,
-      images: post.images,
-      feedback: post.feedback,
-      isRecipientWorking: post.isRecipientWorking,
+      imageUrl: post.imageUrl,
+      isWorkingInProgress: post.isWorkingInProgress,
       createdAt: post.createdAt,
-      approvedAt: post.approvedAt,
-      rejectedAt: post.rejectedAt,
       publishedAt: post.publishedAt,
+      canceledAt: post.canceledAt,
     }
   },
   fromFirestore(snapshot: QueryDocumentSnapshot): Post {
     const data = snapshot.data()!
     return {
       id: data.id,
-      stationId: data.stationId,
-      recipientGroupId: data.recipientGroupId,
-      recipientGroupName: data.recipientGroupName,
-      recipientId: data.recipientId,
-      approvedManagerId: data.approvedManagerId,
-      rejectedManagerId: data.rejectedManagerId,
+      managerId: data.managerId,
+      position: data.position,
       status: data.status,
-      subject: data.subject,
-      body: data.body,
-      images: data.images,
-      feedback: data.feedback,
-      isRecipientWorking: data.isRecipientWorking,
+      imageUrl: data.imageUrl,
+      isWorkingInProgress: data.isWorkingInProgress,
       createdAt: data.createdAt.toDate(),
-      approvedAt: data.approvedAt ? data.approvedAt.toDate() : null,
-      rejectedAt: data.rejectedAt ? data.rejectedAt.toDate() : null,
       publishedAt: data.publishedAt ? data.publishedAt.toDate() : null,
+      canceledAt: data.canceledAt ? data.canceledAt.toDate() : null,
     }
   },
 }
 
-export const createPost = async (recipient: Recipient, groupName: string) => {
+export const createPost = async (manager: Manager, position: string) => {
   const newPost: Post = {
     id: `${moment().utcOffset(9).format('YYMMDD-hhmmss')}`,
-    stationId: recipient.stationId,
-    recipientGroupId: recipient.recipientGroupId,
-    recipientGroupName: groupName,
-    recipientId: recipient.id,
-    approvedManagerId: '',
-    rejectedManagerId: '',
+    managerId: manager.id,
+    position: position,
     status: postStatus.INPUT_IMAGE,
-    subject: '',
-    body: '',
-    images: [],
-    feedback: '',
-    isRecipientWorking: true,
+    imageUrl: '',
+    isWorkingInProgress: true,
     createdAt: moment().utcOffset(9).toDate(),
-    approvedAt: null,
-    rejectedAt: null,
     publishedAt: null,
+    canceledAt: null,
   }
   updatePost(newPost)
   console.info(`create new post${newPost}`)
