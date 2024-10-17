@@ -1,4 +1,4 @@
-import { Manager } from '../../types/managers'
+import { Manager } from '../../types/manager'
 import { db } from './firestore'
 import { DocumentData, QueryDocumentSnapshot } from 'firebase-admin/firestore'
 import { makeId } from '../../utils/random/random'
@@ -26,17 +26,6 @@ export const getManagerByLineId = async (lineId: string) => {
   return manager as Manager | undefined
 }
 
-export const getManagersByStationId = async (stationId: string) => {
-  return (
-    await db
-      .collection('managers')
-      .where('enable', '==', true)
-      .where('stationId', '==', stationId)
-      .withConverter<Manager>(managerConverter)
-      .get()
-  ).docs.map((doc) => doc.data())
-}
-
 export const getManagers = async () => {
   return (
     await db
@@ -51,7 +40,6 @@ const managerConverter = {
   toFirestore(manager: Manager): DocumentData {
     return {
       id: manager.id,
-      stationId: manager.stationId,
       lineId: manager.lineId,
       name: manager.name,
       status: manager.status,
@@ -63,7 +51,6 @@ const managerConverter = {
     const data = snapshot.data()!
     return {
       id: data.id,
-      stationId: data.stationId,
       lineId: data.lineId,
       name: data.name,
       status: data.status,
@@ -76,7 +63,6 @@ const managerConverter = {
 export const createManager = async (lineId: string) => {
   const newManager: Manager = {
     id: `m${makeId(4)}`,
-    stationId: '',
     lineId: lineId,
     name: '',
     status: managerStatus.INPUT_NAME,

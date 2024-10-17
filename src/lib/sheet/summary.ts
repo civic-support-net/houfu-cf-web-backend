@@ -1,5 +1,10 @@
-import { Post } from '../../types/post'
+import { Manager } from '../../types/manager'
+import { Message } from '../../types/message'
 
-export const postSummary = (post: Post) => {
-  return `${post.id}_${post.managerId}`
+export const managerSummary = (manager: Manager) => {
+  return `${manager.id}_${manager.name}`
+}
+
+export const messageSummary = (message: Message) => {
+  return `${message.id}_${message.managerId}`
 }

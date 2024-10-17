@@ -14,11 +14,9 @@ export const newStorage = () => {
 }
 
 export const upload = async (data: Buffer, path: string) => {
-  //upload from memory
   await bucket.file(path).save(data)
 }
 
-//*make public before use
 export const GetUrl = (path: string) => {
   let conf = loadConfig()
   return `https://storage.googleapis.com/${conf.projectId}.appspot.com/${encodeURIComponent(path)}`

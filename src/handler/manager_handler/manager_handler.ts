@@ -1,92 +1,70 @@
 import {
   Client,
-  Message,
+  FollowEvent,
+  Message as LineMessage,
   MessageAPIResponseBase,
   MessageEvent,
-  PostbackEvent,
+  UnfollowEvent,
   WebhookEvent,
 } from '@line/bot-sdk'
 import { Request, Response } from 'express'
-import { managerStatus, postStatus, recipientStatus } from '../../consts/constants'
+import { managerStatus, messageStatus } from '../../consts/constants'
 import { keyword } from '../../consts/keyword'
 import { phrase } from '../../consts/phrase'
-import {
-  createManager,
-  getManagerByLineId,
-  getManagersByStationId,
-  updateManager,
-} from '../../lib/firestore/manager'
+import { createManager, getManagerByLineId, updateManager } from '../../lib/firestore/manager'
 import { QuickReplyTemplate, TextTemplate } from '../../lib/line/template'
-import { Manager } from '../../types/managers'
+import { Manager } from '../../types/manager'
+import { askName, askNameAgain, completeRegister, confirmName, tellWelcome } from './setup'
 import {
-  askName,
-  askNameAgain,
-  askStationId,
-  askStationIdAgain,
-  completeRegister,
-  confirmName,
-  tellWelcome,
-  tellWelcomeBack,
-} from './setup'
-import { PostbackData } from '../../types/postback'
-import {
-  GetPostById,
-  deletePost,
-  getWorkingPostByRejectedManagerId,
-  updatePost,
-} from '../../lib/firestore/post'
-import { Push } from '../../lib/line/line'
-import {
-  askPostId,
-  deletePostSuccess,
-  notFoundPost,
-  approvedPostForManager,
-  approvedPostForRecipient,
-  rejectedPostForManager,
-  rejectedPostForRecipient,
-  askRejectedReason,
-} from './post'
+  createMessage,
+  deleteMessage,
+  getMessageById,
+  getWorkingMessageByManagerId,
+  updateMessage,
+} from '../../lib/firestore/message'
+import { askMessageId, deleteMessageSuccess, notFoundMessage, askImage, tellOK } from './message'
 import { insertLog } from '../../lib/sheet/log'
 import { action } from '../../consts/log'
-import { deletePostData } from '../../lib/storage/post'
-import { postSummary } from '../../lib/sheet/summary'
-import moment from 'moment'
+import { deleteMessageData } from '../../lib/storage/message'
+import { messageSummary } from '../../lib/sheet/summary'
 import { deploy } from '../../lib/github/github'
+import { Message } from '../../types/message'
+import { reactMessageImage } from './react_message_image'
+import { reactMessageText } from './react_message_text'
 
 export class managerLineHandler {
-  constructor(private managerClient: Client, private recipientClient: Client) {}
+  constructor(private managerClient: Client) {}
 
   async handle(req: Request, res: Response) {
     if (!req.body.events || req.body.events.length === 0) {
       return res.status(200)
     }
+
+    //events[0]のみ対応、複数送信は要件になっておらず保留中
     const event: WebhookEvent = req.body.events[0]
-    //events[0]のみ対応するかは、まだ検討中
 
     let result: MessageAPIResponseBase = undefined
 
     // handleEventが必要なDB処理などを実行しユーザー返答Message配列のPromiseを返してくる。
     // this.clientは渡さなくてよくなる
-    const messages = await handleEvent(this.managerClient, this.recipientClient, event).catch(
-      (err) => {
-        if (err instanceof Error) {
-          console.error(err)
-          // LINEでエラーの旨を伝えたいので一旦コメントアウト
-          // return res.status(500).json({
-          // status: 'error',
-          //});
-          // 異常時は定型メッセージで応答
-          return [TextTemplate(phrase.systemError)]
-        }
-      },
-    )
+    const messages = await handleEvent(this.managerClient, event).catch((err) => {
+      if (err instanceof Error) {
+        // LINEでエラーを検知したいのでログ出力
+        console.error(err)
+        // 異常時は定型メッセージで応答
+        return [TextTemplate(phrase.systemError)]
+      }
+    })
 
-    // 正常時にそのメッセージを返し、結果をmapに集約する
-
-    //eventの種類によってはreplyを行わない。
-    if (event.type === 'message' || event.type === 'postback' || event.type === 'follow') {
-      if (messages && messages.length > 0)
+    // replyTokenかつ応答メッセージがある場合、replyMessageを実行
+    if ('replyToken' in event) {
+      if (messages && messages.length > 0) {
         result = await this.managerClient.replyMessage(event.replyToken, messages)
+      } else {
+        console.log('no messages')
+      }
+    } else {
+      console.log('no replyToken')
     }
 
     // すべてが終わり、resultsをBodyとしてhttpの200を返してる
@@ -97,105 +75,91 @@ export class managerLineHandler {
   }
 }
 
-const handleEvent = async (
+export const handleEvent = async (
   managerClient: Client,
-  recipientClient: Client,
   event: WebhookEvent,
-): Promise<Message[] | void> => {
-  let manager_ = await getManagerByLineId(event.source.userId)
-  if (manager_ === undefined) {
-    manager_ = await createManager(event.source.userId)
+): Promise<LineMessage[] | void> => {
+  let manager = await getManagerByLineId(event.source.userId)
+  let message: Message | undefined = undefined
+  if (manager === undefined) {
+    manager = await createManager(event.source.userId)
+  } else {
+    message = await getWorkingMessageByManagerId(manager.id)
   }
-  const manager = manager_ // to make manager constant
-  //const action = react(event, manager)
-  //action(manager, message)
 
   if (event.type === 'unfollow') {
-    manager.enable = false
-    await updateManager(manager)
-    return Promise.resolve()
+    const lineUnfollowEvent = event as UnfollowEvent
+    const messagesByUnfollow = await reactUnfollow(managerClient, lineUnfollowEvent, manager)
+    return messagesByUnfollow
   } else if (event.type === 'follow') {
-    if (manager.name === '' || manager.status === managerStatus.INPUT_NAME) {
-      return [tellWelcome(), askName()]
-    } else {
-      manager.enable = true
-      await updateManager(manager)
-      return [tellWelcomeBack(manager.name)]
-    }
+    const lineFollowEvent = event as FollowEvent
+    const messagesByFollow = await reactFollow(managerClient, lineFollowEvent, manager)
+    return messagesByFollow
   } else if (event.type === 'message') {
-    const messages = await react(recipientClient, managerClient, event, manager)
-    return messages
-  } else if (event.type === 'postback') {
-    const messages = await reactPostback(recipientClient, managerClient, event, manager)
-    return messages
+    const lineMessageEvent = event as MessageEvent
+    const messagesByMessage = await reactMessage(managerClient, lineMessageEvent, manager, message)
+    return messagesByMessage
   }
+
+  return Promise.resolve([TextTemplate(`イベントタイプ(${event.type})には対応していません。`)])
 }
 
-//: Promise<Message[]>
-const reactPostback = async (
-  recipientClient: Client,
+const reactUnfollow = async (
   managerClient: Client,
-  event: PostbackEvent,
+  event: WebhookEvent,
   manager: Manager,
-): Promise<Message[]> => {
-  const data: PostbackData = JSON.parse(event.postback.data)
-  const post = await GetPostById(data.target)
-  const recipient = await GetRecipientById(post.recipientId)
-
-  switch (data.action) {
-    case keyword.APPROVE:
-      console.log(`approve: ${post.approvedManagerId}`)
-      console.log(`reject: ${post.rejectedManagerId}`)
-      if (post.rejectedManagerId != '' || post.approvedManagerId != '') return []
-      post.status = postStatus.APPROVED
-      post.isRecipientWorking = false
-      post.approvedAt = moment().utcOffset(9).toDate()
-      post.approvedManagerId = manager.id
-      await updatePost(post)
-      recipient.status = recipientStatus.IDLE
-      await updateRecipient(recipient)
-      await Push(recipientClient, [recipient.lineId], [approvedPostForRecipient(post.subject)])
-      await Push(
-        managerClient,
-        (await getManagersByStationId(manager.stationId)).map((m) => m.lineId),
-        [approvedPostForManager(manager.name, post.subject)],
-      )
-      await deploy()
-      insertLog(manager.name, action.APPROVE_POST, postSummary(post))
-      break
-    case keyword.REJECT:
-      console.log(`approve: ${post.approvedManagerId}`)
-      console.log(`reject: ${post.rejectedManagerId}`)
-      if (post.rejectedManagerId != '' || post.approvedManagerId != '') return []
-      post.rejectedManagerId = manager.id
-      await updatePost(post)
-      manager.status = managerStatus.INPUT_REJECT_REASON
-      await updateManager(manager)
-      return [askRejectedReason()]
-  }
+): Promise<LineMessage[] | void> => {
+  manager.enable = false
+  await updateManager(manager)
   return []
 }
 
-const react = async (
-  recipientClient: Client,
+const reactFollow = async (
+  managerClient: Client,
+  event: FollowEvent,
+  manager: Manager,
+): Promise<LineMessage[] | void> => {
+  manager.enable = true
+  if (manager.name === '') {
+    // 名前入力から再開
+    manager.status = managerStatus.INPUT_NAME
+    await updateManager(manager)
+    return [tellWelcome(), askName()]
+  } else {
+    await updateManager(manager)
+    return [tellWelcome()]
+  }
+}
+
+const reactMessage = async (
   managerClient: Client,
   event: MessageEvent,
   manager: Manager,
-): Promise<Message[]> => {
+  message: Message,
+): Promise<LineMessage[] | void> => {
   if (event.message.type === 'text') {
+    //　テキストメッセージの場合
     switch (manager.status) {
       case managerStatus.IDLE:
         switch (event.message.text) {
-          case keyword.DELETE_POST:
-            manager.status = managerStatus.DELETE_POST
+          case keyword.POST_MESSAGE:
+            manager.status = managerStatus.POSTING_MESSAGE
             await updateManager(manager)
-            return [askPostId()]
+            const message = await createMessage(manager)
+            await updateMessage(message)
+
+            return [askImage()]
+          case keyword.DELETE_MESSAGE:
+            manager.status = managerStatus.DELETE_MESSAGE
+            await updateManager(manager)
+            return [askMessageId()]
           case keyword.DO_NOTHING:
-            return []
+            return [tellOK()]
           default:
             return [
-              QuickReplyTemplate('こんにちは！何をしますか?', [
-                keyword.DELETE_POST,
+              QuickReplyTemplate('こんにちは！何をしますか？', [
+                keyword.POST_MESSAGE,
+                keyword.DELETE_MESSAGE,
                 keyword.DO_NOTHING,
               ]),
             ]
@@ -209,9 +173,10 @@ const react = async (
       case managerStatus.CONFIRM_NAME:
         switch (event.message.text) {
           case keyword.YES:
-            manager.status = managerStatus.INPUT_STATION_ID
+            manager.status = managerStatus.IDLE
+            manager.enable = true
             await updateManager(manager)
-            return [askStationId()]
+            return [completeRegister(manager.name)]
           case keyword.NO:
             manager.status = managerStatus.INPUT_NAME
             manager.name = ''
@@ -220,67 +185,34 @@ const react = async (
           default:
             return [TextTemplate(phrase.yesOrNo)]
         }
-      case managerStatus.INPUT_STATION_ID:
-        const station = await getStationById(event.message.text)
-        if (station === undefined) {
-          return [askStationIdAgain()]
-        } else {
-          manager.stationId = station.id
-          manager.status = managerStatus.IDLE
-          manager.enable = true
-          await updateManager(manager)
-          return [completeRegister(manager.name)]
-        }
-      case managerStatus.DELETE_POST:
-        const post = await GetPostById(event.message.text)
+
+      case managerStatus.POSTING_MESSAGE:
+        return reactMessageText(managerClient, event.message.text, manager, message)
+
+      case managerStatus.DELETE_MESSAGE:
+        const targetMessage = await getMessageById(event.message.text)
         manager.status = managerStatus.IDLE
         await updateManager(manager)
-        if (post === undefined) {
-          return [notFoundPost()]
+        if (targetMessage === undefined) {
+          return [notFoundMessage()]
         } else {
-          await deletePost(post)
-          deletePostData(post).catch((err) => console.error(err))
+          await deleteMessage(targetMessage)
+          deleteMessageData(targetMessage).catch((err) => console.error(err))
           await deploy()
-          insertLog(manager.name, action.DELETE_POST, postSummary(post))
-          return [deletePostSuccess(post.subject)]
+          insertLog(manager.name, action.DELETE_MESSAGE, messageSummary(targetMessage))
+          return [deleteMessageSuccess(targetMessage.id)]
         }
-      case managerStatus.INPUT_REJECT_REASON:
-        const post_ = await getWorkingPostByRejectedManagerId(manager.id)
-        if (post_ === undefined) {
-          manager.status = managerStatus.IDLE
-          await updateManager(manager)
-          console.log('INPUT_REJECT_REASON: post not found')
-          return [TextTemplate(phrase.systemError)]
-        } else {
-          const recipient = await GetRecipientById(post_.recipientId)
-          post_.status = postStatus.REJECTED
-          post_.feedback = event.message.text
-          post_.rejectedAt = moment().utcOffset(9).toDate()
-          post_.isRecipientWorking = false
-          await updatePost(post_)
-          recipient.status = recipientStatus.IDLE
-          await updateRecipient(recipient)
-          manager.status = managerStatus.IDLE
-          await updateManager(manager)
-          await Push(
-            recipientClient,
-            [recipient.lineId],
-            [rejectedPostForRecipient(post_.subject, post_.feedback)],
-          )
-          await Push(
-            managerClient,
-            (await getManagersByStationId(manager.stationId)).map((m) => m.lineId),
-            [rejectedPostForManager(manager.name, post_.subject)],
-          )
-          insertLog(manager.name, action.REJECT_POST, `${postSummary(post_)}_${post_.feedback}`)
-          return []
-        }
+
+      default:
+        return [TextTemplate(phrase.notSupportedCase(`manager.status: ${manager.status}`))]
     }
-  } else {
-    switch (manager.status) {
-      case managerStatus.INPUT_NAME:
-        return [askNameAgain()]
+  } else if (event.message.type === 'image') {
+    if (message && message.status === messageStatus.INPUT_IMAGE) {
+      return reactMessageImage(managerClient, event.message.id, message)
+    } else {
+      return [TextTemplate(phrase.notSupportedCase('今の会話では画像を受け付けていません。'))]
     }
   }
-  return [TextTemplate(phrase.dontHaveMessage)]
+
+  return [TextTemplate(phrase.notSupportedCase(`event.message.type: ${event.message.type}`))]
 }

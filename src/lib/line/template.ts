@@ -1,32 +1,5 @@
-import {
-  Action,
-  QuickReplyItem,
-  TemplateMessage,
-  TextMessage,
-} from '@line/bot-sdk'
+import { QuickReplyItem, TemplateMessage, TextMessage } from '@line/bot-sdk'
 import { keyword } from '../../consts/keyword'
-
-export const NewPostbackAction = (label: string, data: string) => {
-  const action: Action = {
-    type: 'postback',
-    label: label,
-    data: data,
-  }
-  return action
-}
-
-export const ConfirmTemplatePostback = (text: string, alt: string, options: Action[]) => {
-  const message: TemplateMessage = {
-    type: 'template',
-    altText: alt,
-    template: {
-      type: 'confirm',
-      actions: [options[0], options[1]],
-      text: text,
-    },
-  }
-  return message
-}
 
 export const ConfirmTemplate = (text: string, alt: string, option?: string[]) => {
   let yes = keyword.YES
