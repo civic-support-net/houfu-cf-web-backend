@@ -37,6 +37,6 @@ app.use('/hook', hookMiddleware, new hookHandler(managerClient).handle())
 // TODO: 仕様が固まり次第着手します
 // app.post('/batch', middleware, (req, res) => lineEvent(client, req, res));
 
-app.get('/batch/ping', (req, res) => {
-  res.send('pong2')
+app.get('/ping', (req, res) => {
+  res.send('pong')
 })

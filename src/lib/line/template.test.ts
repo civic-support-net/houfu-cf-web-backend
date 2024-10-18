@@ -1,5 +1,5 @@
 import { keyword } from '../../consts/keyword'
-import { ConfirmTemplate, QuickReplyTemplate, TextTemplate } from './template'
+import { ConfirmTemplate, ImageTemplate, QuickReplyTemplate, TextTemplate } from './template'
 
 describe(`line line/template `, () => {
   it(':TextTemplate', () => {
@@ -42,6 +42,20 @@ describe(`line line/template `, () => {
           text: `確認ダイアログテスト任意選択肢`,
         },
       })
+    })
+  })
+
+  it(':ImageTemplate', () => {
+    expect(
+      ImageTemplate(
+        'https://storage.googleapis.com/houfu-cf-dev.appspot.com/messages/20241018-092610.png',
+      ),
+    ).toMatchObject({
+      type: 'image',
+      originalContentUrl:
+        'https://storage.googleapis.com/houfu-cf-dev.appspot.com/messages/20241018-092610.png',
+      previewImageUrl:
+        'https://storage.googleapis.com/houfu-cf-dev.appspot.com/messages/20241018-092610.png',
     })
   })
 

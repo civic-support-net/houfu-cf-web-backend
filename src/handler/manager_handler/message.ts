@@ -1,7 +1,6 @@
 import { FlexMessage } from '@line/bot-sdk'
 import { keyword } from '../../consts/keyword'
-import { ConfirmTemplate, TextTemplate } from '../../lib/line/template'
-import { GetUrl } from '../../lib/storage/storage'
+import { ConfirmTemplate, ImageTemplate, TextTemplate } from '../../lib/line/template'
 
 export const askImage = () => {
   return TextTemplate(
@@ -9,16 +8,23 @@ export const askImage = () => {
   )
 }
 
+export const showImage = (imageUrl: string) => {
+  return ImageTemplate(imageUrl)
+}
+
 export const confirmImage = () => {
   return ConfirmTemplate(`画像の背景抜き処理後はこのようになります。よろしいですか？`, `画像確認`)
 }
 
 export const askPosition = () => {
-  return TextTemplate(`このメッセージを書かれた立場を選んでください。`)
+  return ConfirmTemplate(`この画像はどちらからのメッセージですか？`, `立場入力`, [
+    keyword.RECIPIENT,
+    keyword.PROVIDER,
+  ])
 }
 
 export const confirmPosition = (position: string) => {
-  return ConfirmTemplate(`立場は「${position}」でいいですか？`, `立場確認`)
+  return ConfirmTemplate(`${position}からのメッセージでいいですか？`, `立場確認`)
 }
 
 export const askPositionAgain = () => {

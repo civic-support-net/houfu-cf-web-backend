@@ -4,7 +4,8 @@ import { messageStatus } from '../../consts/constants'
 import sharp from 'sharp'
 import { uploadImage } from '../../lib/storage/message'
 import { updateMessage } from '../../lib/firestore/message'
-import { confirmImage } from './message'
+import { confirmImage, showImage } from './message'
+import { GetUrl } from '../../lib/storage/storage'
 
 const IMAGE_SIZE = 680
 
@@ -24,7 +25,7 @@ export const reactMessageImage = async (
       message.imageUrl = path
       message.status = messageStatus.CONFIRM_IMAGE
       await updateMessage(message)
-      return [confirmImage()]
+      return [showImage(GetUrl(path)), confirmImage()]
   }
 }
 

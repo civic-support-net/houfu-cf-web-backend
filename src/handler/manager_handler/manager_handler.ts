@@ -36,12 +36,15 @@ export class managerLineHandler {
   constructor(private managerClient: Client) {}
 
   async handle(req: Request, res: Response) {
+    console.log('manager_handler: called')
     if (!req.body.events || req.body.events.length === 0) {
-      return res.status(200)
+      console.log('manager_handler: no events')
+      return res.sendStatus(200)
     }
 
     //events[0]のみ対応、複数送信は要件になっておらず保留中
     const event: WebhookEvent = req.body.events[0]
+    console.log(`manager_handler: event.type = ${event.type}`)
 
     let result: MessageAPIResponseBase = undefined
 
@@ -61,10 +64,10 @@ export class managerLineHandler {
       if (messages && messages.length > 0) {
         result = await this.managerClient.replyMessage(event.replyToken, messages)
       } else {
-        console.log('no messages')
+        console.log('manager_handler: no messages')
       }
     } else {
-      console.log('no replyToken')
+      console.log('manager_handler: no replyToken')
     }
 
     // すべてが終わり、resultsをBodyとしてhttpの200を返してる

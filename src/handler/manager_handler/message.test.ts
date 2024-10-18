@@ -25,10 +25,13 @@ test(`message`, async () => {
   )
 
   expect(askPosition()).toMatchObject(
-    TextTemplate('このメッセージを書かれた立場を選んでください。'),
+    ConfirmTemplate(`この画像はどちらからのメッセージですか？`, `立場入力`, [
+      keyword.RECIPIENT,
+      keyword.PROVIDER,
+    ]),
   )
-  expect(confirmPosition('受給者')).toMatchObject(
-    ConfirmTemplate('立場は「受給者」でいいですか？', '立場確認'),
+  expect(confirmPosition(keyword.RECIPIENT)).toMatchObject(
+    ConfirmTemplate(`${keyword.RECIPIENT}からのメッセージでいいですか？`, `立場確認`),
   )
 
   expect(askPositionAgain()).toMatchObject(TextTemplate('もう一度、立場を選んでください。'))
@@ -53,7 +56,7 @@ test(`message`, async () => {
   expect(
     previewMessage(
       '受給者',
-      `https://storage.googleapis.com/${conf.projectId}.appspot.com/messages/1.png`,
+      `https://storage.googleapis.com/${conf.projectId}.appspot.com/messages/20241018-092610.png`,
     ),
   ).toMatchObject({
     type: 'flex',
@@ -62,7 +65,7 @@ test(`message`, async () => {
       type: 'bubble',
       hero: {
         type: 'image',
-        url: `https://storage.googleapis.com/${conf.projectId}.appspot.com/messages/1.png`,
+        url: `https://storage.googleapis.com/${conf.projectId}.appspot.com/messages/20241018-092610.png`,
         size: 'full',
         aspectRatio: '20:13',
         aspectMode: 'cover',

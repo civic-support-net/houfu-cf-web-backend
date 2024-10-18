@@ -24,6 +24,7 @@ import { insertLog } from '../../lib/sheet/log'
 import { managerSummary, messageSummary } from '../../lib/sheet/summary'
 import { Manager } from '../../types/manager'
 import { GetUrl } from '../../lib/storage/storage'
+import moment from 'moment'
 
 export const reactMessageText = async (
   managerClient: Client,
@@ -75,6 +76,7 @@ export const reactMessageText = async (
           manager.status = managerStatus.IDLE
           await updateManager(manager)
           message.status = messageStatus.APPROVED
+          message.approvedAt = moment().utcOffset(9).toDate()
           await updateMessage(message)
           await Push(
             managerClient,
@@ -82,7 +84,8 @@ export const reactMessageText = async (
             [completeMessage()],
           )
           insertLog(managerSummary(manager), action.APPROVE_MESSAGE, messageSummary(message))
-          return [completeMessage()]
+          // Pushで伝えるので応答はしない
+          return []
         case keyword.CANCEL:
           manager.status = managerStatus.IDLE
           await updateManager(manager)
@@ -90,7 +93,7 @@ export const reactMessageText = async (
           deleteMessageData(message).catch((err) => console.error(err))
           return [discardMessage()]
         default:
-          return [TextTemplate(phrase.yesOrNo)]
+          return [TextTemplate(phrase.aOrb(keyword.APPROVE, keyword.CANCEL))]
       }
   }
 }

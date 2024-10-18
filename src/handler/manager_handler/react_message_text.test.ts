@@ -30,7 +30,7 @@ const getMessage = (status: messageStatusType): Message => {
     managerId: 'm0001',
     position: '受給者',
     status: status,
-    imageUrl: 'path',
+    imageUrl: '20241018-093110.png',
     isWorkingInProgress: true,
     createdAt: new Date('December 15, 1990 01:23:00'),
     approvedAt: null,
@@ -140,7 +140,7 @@ describe('react_message_text', () => {
       const message = getMessage(messageStatus.CONFIRM_SUBMIT)
       expect(
         await reactMessageText(managerClient, keyword.APPROVE, manager, message),
-      ).toMatchObject([completeMessage()])
+      ).toMatchObject([])
     })
     it(':いいえ', async () => {
       const message = getMessage(messageStatus.CONFIRM_SUBMIT)
@@ -151,7 +151,7 @@ describe('react_message_text', () => {
     it(':その他', async () => {
       const message = getMessage(messageStatus.CONFIRM_SUBMIT)
       expect(await reactMessageText(managerClient, 'unknown', manager, message)).toMatchObject([
-        TextTemplate(phrase.yesOrNo),
+        TextTemplate(phrase.aOrb(keyword.APPROVE, keyword.CANCEL)),
       ])
     })
   })

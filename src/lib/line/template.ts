@@ -1,4 +1,4 @@
-import { QuickReplyItem, TemplateMessage, TextMessage } from '@line/bot-sdk'
+import { ImageMessage, QuickReplyItem, TemplateMessage, TextMessage } from '@line/bot-sdk'
 import { keyword } from '../../consts/keyword'
 
 export const ConfirmTemplate = (text: string, alt: string, option?: string[]) => {
@@ -27,6 +27,15 @@ export const TextTemplate = (text: string) => {
   const message: TextMessage = {
     type: 'text',
     text: text,
+  }
+  return message
+}
+
+export const ImageTemplate = (imageUrl: string): ImageMessage => {
+  const message: ImageMessage = {
+    type: 'image',
+    originalContentUrl: imageUrl,
+    previewImageUrl: imageUrl,
   }
   return message
 }

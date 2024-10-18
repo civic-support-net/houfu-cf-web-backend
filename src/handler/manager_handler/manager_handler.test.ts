@@ -26,7 +26,7 @@ const getMessage = (): Message => {
     managerId: 'm0001',
     position: '受給者',
     status: messageStatus.APPROVED,
-    imageUrl: 'https://example.com',
+    imageUrl: '20241018-093110.png',
     isWorkingInProgress: false,
     createdAt: new Date('December 15, 1990 01:23:00'),
     approvedAt: null,

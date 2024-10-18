@@ -6,5 +6,5 @@ export const managerSummary = (manager: Manager) => {
 }
 
 export const messageSummary = (message: Message) => {
-  return `${message.id}_${message.managerId}`
+  return `${message.id}_${message.position}`
 }
