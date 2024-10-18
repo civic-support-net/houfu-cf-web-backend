@@ -31,6 +31,8 @@ import { deploy } from '../../lib/github/github'
 import { Message } from '../../types/message'
 import { reactMessageImage } from './react_message_image'
 import { reactMessageText } from './react_message_text'
+import { format } from 'date-fns'
+import { jstDateString } from '../../utils/date'
 
 export class managerLineHandler {
   constructor(private managerClient: Client) {}
@@ -202,7 +204,12 @@ const reactMessage = async (
           await deleteMessage(targetMessage)
           deleteMessageData(targetMessage).catch((err) => console.error(err))
           await deploy()
-          insertLog(manager.name, action.DELETE_MESSAGE, messageSummary(targetMessage))
+          insertLog(
+            jstDateString(new Date()),
+            manager.name,
+            action.DELETE_MESSAGE,
+            messageSummary(targetMessage),
+          )
           return [deleteMessageSuccess(targetMessage.id)]
         }
 

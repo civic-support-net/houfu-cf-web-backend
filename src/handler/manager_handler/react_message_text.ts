@@ -24,8 +24,9 @@ import { insertLog } from '../../lib/sheet/log'
 import { managerSummary, messageSummary } from '../../lib/sheet/summary'
 import { Manager } from '../../types/manager'
 import { GetUrl } from '../../lib/storage/storage'
-import moment from 'moment'
 import { deploy } from '../../lib/github/github'
+import { format } from 'date-fns'
+import { jstDateString } from '../../utils/date'
 
 export const reactMessageText = async (
   managerClient: Client,
@@ -78,7 +79,7 @@ export const reactMessageText = async (
           await updateManager(manager)
           message.status = messageStatus.APPROVED
           message.isWorkingInProgress = false
-          message.approvedAt = moment().utcOffset(9).toDate()
+          message.approvedAt = new Date()
           await updateMessage(message)
           await Push(
             managerClient,
@@ -86,7 +87,12 @@ export const reactMessageText = async (
             [completeMessage()],
           )
           await deploy()
-          insertLog(managerSummary(manager), action.APPROVE_MESSAGE, messageSummary(message))
+          insertLog(
+            jstDateString(new Date()),
+            managerSummary(manager),
+            action.APPROVE_MESSAGE,
+            messageSummary(message),
+          )
           // Pushで伝えるので応答はしない
           return []
         case keyword.CANCEL:

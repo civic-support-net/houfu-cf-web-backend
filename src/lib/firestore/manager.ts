@@ -3,7 +3,6 @@ import { db } from './firestore'
 import { DocumentData, QueryDocumentSnapshot } from 'firebase-admin/firestore'
 import { makeId } from '../../utils/random/random'
 import { managerStatus } from '../../consts/constants'
-import moment from 'moment'
 
 export const GetManagerById = async (id: string) => {
   let manager: Manager = (
@@ -67,7 +66,7 @@ export const createManager = async (lineId: string) => {
     name: '',
     status: managerStatus.INPUT_NAME,
     enable: false,
-    createdAt: moment().utcOffset(9).toDate(),
+    createdAt: new Date(),
   }
   updateManager(newManager)
   console.info(`create new manager${newManager}`)

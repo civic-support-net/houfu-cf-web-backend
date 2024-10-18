@@ -3,9 +3,7 @@ import { Request, Response } from 'express'
 import { getNonPublishedApprovedMessages, updateMessage } from '../../lib/firestore/message'
 import { publishedMessage } from './message'
 import { loadConfig } from '../../config/config'
-import moment from 'moment'
 import { GetManagerById } from '../../lib/firestore/manager'
-import axios from 'axios'
 
 export class publishMessagesHandler {
   constructor(private managerClient: Client) {}
@@ -26,7 +24,7 @@ export class publishMessagesHandler {
       this.managerClient.pushMessage(managerLineId, [
         publishedMessage(message.id, message.approvedAt.toLocaleDateString(), conf.frontendUrl),
       ])
-      message.publishedAt = moment().utcOffset(9).toDate()
+      message.publishedAt = new Date()
       updateMessage(message)
     })
 

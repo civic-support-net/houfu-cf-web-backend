@@ -1,9 +1,11 @@
 import { db } from './firestore'
 import { DocumentData, QueryDocumentSnapshot } from 'firebase-admin/firestore'
 import { messageStatus } from '../../consts/constants'
-import moment from 'moment'
 import { Manager } from '../../types/manager'
 import { Message } from '../../types/message'
+import { format } from 'date-fns'
+import { toZonedTime } from 'date-fns-tz'
+import { jstDateString } from '../../utils/date'
 
 export const getMessageById = async (id: string) => {
   let message: Message = (
@@ -73,14 +75,15 @@ const messageConverter = {
 }
 
 export const createMessage = async (manager: Manager) => {
+  const now = new Date()
   const newMessage: Message = {
-    id: `${moment().utcOffset(9).format('YYMMDD-hhmmss')}`,
+    id: jstDateString(now),
     managerId: manager.id,
     position: '',
     status: messageStatus.INPUT_IMAGE,
     imageUrl: '',
     isWorkingInProgress: true,
-    createdAt: moment().utcOffset(9).toDate(),
+    createdAt: now,
     approvedAt: null,
     canceledAt: null,
     publishedAt: null,
