@@ -15,7 +15,6 @@ import {
   askImage,
   askPosition,
   askPositionAgain,
-  completeMessage,
   confirmPosition,
   confirmSubmit,
   discardMessage,
@@ -70,6 +69,10 @@ jest.mock('../../lib/sheet/log', () => ({
 
 jest.mock('../../lib/storage/message', () => ({
   deleteMessageData: () => Promise.resolve(),
+}))
+
+jest.mock('../../lib/github/github', () => ({
+  deploy: jest.fn(),
 }))
 
 describe('react_message_text', () => {

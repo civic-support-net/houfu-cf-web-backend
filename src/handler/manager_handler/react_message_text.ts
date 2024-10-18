@@ -25,6 +25,7 @@ import { managerSummary, messageSummary } from '../../lib/sheet/summary'
 import { Manager } from '../../types/manager'
 import { GetUrl } from '../../lib/storage/storage'
 import moment from 'moment'
+import { deploy } from '../../lib/github/github'
 
 export const reactMessageText = async (
   managerClient: Client,
@@ -76,6 +77,7 @@ export const reactMessageText = async (
           manager.status = managerStatus.IDLE
           await updateManager(manager)
           message.status = messageStatus.APPROVED
+          message.isWorkingInProgress = false
           message.approvedAt = moment().utcOffset(9).toDate()
           await updateMessage(message)
           await Push(
@@ -83,6 +85,7 @@ export const reactMessageText = async (
             (await getManagers()).map((m) => m.lineId),
             [completeMessage()],
           )
+          await deploy()
           insertLog(managerSummary(manager), action.APPROVE_MESSAGE, messageSummary(message))
           // Pushで伝えるので応答はしない
           return []

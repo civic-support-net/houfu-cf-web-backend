@@ -7,7 +7,9 @@
     "test": "jest",
     "start": "nodemon",
     "build": "npx tsc",
-    "lint:fix": "tslint --fix --project ."
+    "lint:fix": "tslint --fix --project .",
+    "jwt-gen": "ts-node ./script/jwt-gen.ts",
+    "jwt-verify": "ts-node ./script/jwt-verify.ts"
   },
   "keywords": [],
   "author": "",

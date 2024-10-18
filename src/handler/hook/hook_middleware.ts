@@ -17,11 +17,13 @@ export const hookMiddleware = (req: Request, res: Response, next: NextFunction) 
   const token = parts[1]
   console.log(`token: ${token}`)
 
-  try {
-    const decoded = jwt.verify(token, conf.jwtSecret)
-    next()
-  } catch (err) {
-    console.error(`jwt verify: ${err}`)
-    return res.sendStatus(403)
-  }
+  jwt.verify(token, conf.jwtSecret, (err, decoded) => {
+    if (err) {
+      console.error(`jwt verify: ${err}`)
+      return res.sendStatus(403)
+    } else {
+      console.log('jwt verify: ok')
+      next()
+    }
+  })
 }
