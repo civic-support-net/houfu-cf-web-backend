@@ -22,7 +22,7 @@ export const reactMessageImage = async (
         .resize({ width: IMAGE_SIZE, height: IMAGE_SIZE, fit: sharp.fit.inside })
         .toBuffer()
       let path = await uploadImage(image, message)
-      message.imageUrl = path
+      message.imageUrl = GetUrl(path)
       message.status = messageStatus.CONFIRM_IMAGE
       await updateMessage(message)
       return [showImage(GetUrl(path)), confirmImage()]
