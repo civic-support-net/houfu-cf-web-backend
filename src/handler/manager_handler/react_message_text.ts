@@ -6,7 +6,6 @@ import { deleteMessage, updateMessage } from '../../lib/firestore/message'
 import {
   askImage,
   completeMessage,
-  confirmImage,
   confirmSubmit,
   discardMessage,
   previewMessage,
@@ -23,9 +22,7 @@ import { action } from '../../consts/log'
 import { insertLog } from '../../lib/sheet/log'
 import { managerSummary, messageSummary } from '../../lib/sheet/summary'
 import { Manager } from '../../types/manager'
-import { GetUrl } from '../../lib/storage/storage'
 import { deploy } from '../../lib/github/github'
-import { format } from 'date-fns'
 import { jstDateString } from '../../utils/date'
 
 export const reactMessageText = async (
@@ -46,6 +43,7 @@ export const reactMessageText = async (
           return [askPosition()]
         case keyword.NO:
           message.status = messageStatus.INPUT_IMAGE
+          await deleteMessageData(message)
           await updateMessage(message)
           return [askImage()]
         default:
@@ -63,7 +61,7 @@ export const reactMessageText = async (
         case keyword.YES:
           message.status = messageStatus.CONFIRM_SUBMIT
           await updateMessage(message)
-          return [previewMessage(message.position, GetUrl(message.imageUrl)), confirmSubmit()]
+          return [previewMessage(message.position, message.imageUrl), confirmSubmit()]
         case keyword.NO:
           message.status = messageStatus.INPUT_POSITION
           await updateMessage(message)

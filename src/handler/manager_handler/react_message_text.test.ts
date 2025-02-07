@@ -120,7 +120,7 @@ describe('react_message_text', () => {
     it(':はい', async () => {
       const message = getMessage(messageStatus.CONFIRM_POSITION)
       expect(await reactMessageText(managerClient, keyword.YES, manager, message)).toMatchObject([
-        previewMessage(message.position, GetUrl(message.imageUrl)),
+        previewMessage(message.position, message.imageUrl),
         confirmSubmit(),
       ])
     })
