@@ -1,5 +1,6 @@
 export type Config = {
   projectId: string
+  bucketName: string
   logSheetId: string
   managerLineSecret: string
   managerLineAccessToken: string
@@ -22,6 +23,7 @@ export const loadConfig = (): Config => {
   if (!config) {
     config = {
       projectId: process.env.PROJECT_ID,
+      bucketName: process.env.BUCKET_NAME,
       logSheetId: process.env.LOG_SHEET_ID,
       managerLineSecret: process.env.MANAGER_LINE_SECRET,
       managerLineAccessToken: process.env.MANAGER_LINE_TOKEN,

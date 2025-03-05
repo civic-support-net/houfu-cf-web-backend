@@ -56,7 +56,7 @@ test(`message`, async () => {
   expect(
     previewMessage(
       '受給者',
-      `https://storage.googleapis.com/${conf.projectId}.appspot.com/messages/20241018-092610.png`,
+      `https://storage.googleapis.com/${conf.bucketName}/messages/20241018-092610.png`,
     ),
   ).toMatchObject({
     type: 'flex',
@@ -65,7 +65,7 @@ test(`message`, async () => {
       type: 'bubble',
       hero: {
         type: 'image',
-        url: `https://storage.googleapis.com/${conf.projectId}.appspot.com/messages/20241018-092610.png`,
+        url: `https://storage.googleapis.com/${conf.bucketName}/messages/20241018-092610.png`,
         size: 'full',
         aspectRatio: '20:13',
         aspectMode: 'cover',

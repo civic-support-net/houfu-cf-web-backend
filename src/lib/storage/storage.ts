@@ -9,7 +9,7 @@ export const newStorage = () => {
   if (db === undefined) {
     db = admin.storage()
     let conf = loadConfig()
-    bucket = db.bucket(`gs://${conf.projectId}.appspot.com`)
+    bucket = db.bucket(`gs://${conf.bucketName}`)
   }
 }
 
@@ -19,5 +19,5 @@ export const upload = async (data: Buffer, path: string) => {
 
 export const GetUrl = (path: string) => {
   let conf = loadConfig()
-  return `https://storage.googleapis.com/${conf.projectId}.appspot.com/${encodeURIComponent(path)}`
+  return `https://storage.googleapis.com/${conf.bucketName}/${encodeURIComponent(path)}`
 }
