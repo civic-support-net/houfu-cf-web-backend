@@ -5,10 +5,10 @@ on:
 
 name: Build and Deploy to Cloud Run on merge to branch 'main'
 env:
-  PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
-  REGION: ${{ secrets.GCP_REGION }}
-  SERVICE_NAME: ${{ secrets.SERVICE_NAME }}
-  REPOSITORY_NAME: ${{ secrets.REPOSITORY_NAME }}
+  PROJECT_ID: ${{ secrets.GCP_PROJECT_ID_PROD }}
+  REGION: ${{ secrets.GCP_REGION_PROD }}
+  SERVICE_NAME: ${{ secrets.SERVICE_NAME_PROD }}
+  REPOSITORY_NAME: ${{ secrets.REPOSITORY_NAME_PROD }}
 
 jobs:
   deploy:
@@ -26,8 +26,8 @@ jobs:
         name: 'Authenticate to Google Cloud'
         uses: 'google-github-actions/auth@v1'
         with:
-          workload_identity_provider: ${{ secrets.WORKLOAD_IDENTITY_PROVIDER }}
-          service_account: github-actions@${{ secrets.GCP_PROJECT_ID }}.iam.gserviceaccount.com
+          workload_identity_provider: ${{ secrets.WORKLOAD_IDENTITY_PROVIDER_PROD }}
+          service_account: github-actions@${{ secrets.GCP_PROJECT_ID_PROD }}.iam.gserviceaccount.com
 
       - name: Authorize Docker push
         run: gcloud auth configure-docker $REGION-docker.pkg.dev
