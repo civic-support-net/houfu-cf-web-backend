@@ -24,6 +24,7 @@ import { managerSummary, messageSummary } from '../../lib/sheet/summary'
 import { Manager } from '../../types/manager'
 import { deploy } from '../../lib/github/github'
 import { jstDateString } from '../../utils/date'
+import { messageOrgStoragePath, messageStoragePath } from '../../consts/message'
 
 export const reactMessageText = async (
   managerClient: Client,
@@ -43,7 +44,8 @@ export const reactMessageText = async (
           return [askPosition()]
         case keyword.NO:
           message.status = messageStatus.INPUT_IMAGE
-          await deleteMessageData(message)
+          await deleteMessageData(messageStoragePath(message.id))
+          await deleteMessageData(messageOrgStoragePath(message.id))
           await updateMessage(message)
           return [askImage()]
         default:
@@ -97,7 +99,8 @@ export const reactMessageText = async (
           manager.status = managerStatus.IDLE
           await updateManager(manager)
           await deleteMessage(message)
-          deleteMessageData(message).catch((err) => console.error(err))
+          deleteMessageData(messageStoragePath(message.id)).catch((err) => console.error(err))
+          deleteMessageData(messageOrgStoragePath(message.id)).catch((err) => console.error(err))
           return [discardMessage()]
         default:
           return [TextTemplate(phrase.aOrb(keyword.APPROVE, keyword.CANCEL))]

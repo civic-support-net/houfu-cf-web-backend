@@ -33,6 +33,7 @@ import { reactMessageImage } from './react_message_image'
 import { reactMessageText } from './react_message_text'
 import { format } from 'date-fns'
 import { jstDateString } from '../../utils/date'
+import { messageOrgStoragePath, messageStoragePath } from '../../consts/message'
 
 export class managerLineHandler {
   constructor(private managerClient: Client) {}
@@ -202,7 +203,10 @@ const reactMessage = async (
           return [notFoundMessage()]
         } else {
           await deleteMessage(targetMessage)
-          deleteMessageData(targetMessage).catch((err) => console.error(err))
+          deleteMessageData(messageStoragePath(targetMessage.id)).catch((err) => console.error(err))
+          deleteMessageData(messageOrgStoragePath(targetMessage.id)).catch((err) =>
+            console.error(err),
+          )
           await deploy()
           insertLog(
             jstDateString(new Date()),
