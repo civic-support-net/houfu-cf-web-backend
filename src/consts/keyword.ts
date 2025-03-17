@@ -5,8 +5,8 @@ export const keyword = {
   POST_MESSAGE: 'メッセージ投稿',
   DELETE_MESSAGE: 'メッセージ削除',
   FINISH_IMAGE: '画像完了',
-  RECIPIENT: '受給された方',
-  PROVIDER: '提供された方',
+  RECIPIENT: 'うけとった方',
+  PROVIDER: 'おくった方',
   APPROVE: '承認',
   CANCEL: 'キャンセル',
 }
