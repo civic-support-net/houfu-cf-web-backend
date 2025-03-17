@@ -6,6 +6,7 @@ import { uploadImage } from '../../lib/storage/message'
 import { updateMessage } from '../../lib/firestore/message'
 import { confirmImage, showImage } from './message'
 import { GetUrl } from '../../lib/storage/storage'
+import { messageOrgStoragePath, messageStoragePath } from '../../consts/message'
 
 // デザインの5:3を維持する
 const IMAGE_WIDTH = 800
@@ -21,6 +22,10 @@ export const reactMessageImage = async (
 
   switch (message.status) {
     case messageStatus.INPUT_IMAGE:
+      // オリジナル画像をアップロードする
+      const orgPath = messageOrgStoragePath(message.id)
+      await uploadImage(inputBuffer, orgPath)
+
       // 画像を読み込み、リサイズ & クロップ
       let image = sharp(inputBuffer)
         .resize(IMAGE_WIDTH, IMAGE_HEIGHT, {
@@ -54,7 +59,8 @@ export const reactMessageImage = async (
         .png()
         .toBuffer()
 
-      let path = await uploadImage(outputBuffer, message)
+      const path = messageStoragePath(message.id)
+      await uploadImage(outputBuffer, path)
       message.imageUrl = GetUrl(path)
       message.status = messageStatus.CONFIRM_IMAGE
       await updateMessage(message)
