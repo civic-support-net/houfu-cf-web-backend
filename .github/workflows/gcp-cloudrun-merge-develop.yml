@@ -2,6 +2,7 @@ on:
   push:
     branches:
       - develop
+  workflow_dispatch:
 
 name: Build and Deploy to Cloud Run on merge to branch 'develop'
 env:
@@ -12,6 +13,7 @@ env:
 
 jobs:
   deploy:
+    if: github.ref == 'refs/heads/develop'
     runs-on: ubuntu-latest
 
     permissions:
