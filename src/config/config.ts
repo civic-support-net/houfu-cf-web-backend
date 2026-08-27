@@ -8,7 +8,9 @@ export type Config = {
   githubRepository: string
   githubYaml: string
   githubBranch: string
-  githubToken: string
+  githubAppId: string
+  githubAppInstallationId: string
+  githubAppPrivateKey: string
   jwtSecret: string
   frontendUrl: string
 }
@@ -31,7 +33,12 @@ export const loadConfig = (): Config => {
       githubRepository: process.env.GITHUB_REPOSITORY,
       githubYaml: process.env.GITHUB_YAML,
       githubBranch: process.env.GITHUB_BRANCH,
-      githubToken: process.env.GITHUB_TOKEN,
+      githubAppId: process.env.GITHUB_APP_ID,
+      githubAppInstallationId: process.env.GITHUB_APP_INSTALLATION_ID,
+      // PEM形式の秘密鍵をbase64エンコードして環境変数に設定する
+      githubAppPrivateKey: Buffer.from(process.env.GITHUB_APP_PRIVATE_KEY ?? '', 'base64').toString(
+        'utf8',
+      ),
       jwtSecret: process.env.JWT_SECRET,
       frontendUrl: process.env.FRONTEND_URL,
     }

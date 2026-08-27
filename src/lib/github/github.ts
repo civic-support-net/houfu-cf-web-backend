@@ -1,13 +1,19 @@
-import http from 'http'
+import axios from 'axios'
+import * as jwt from 'jsonwebtoken'
 import { loadConfig } from '../../config/config'
-var request = require('request')
 
 export var gh: GithubClient | undefined
 
 export const newGithub = () => {
   if (gh === undefined) {
     let conf = loadConfig()
-    gh = new GithubClient(conf.githubUsername, conf.githubRepository, conf.githubToken)
+    gh = new GithubClient(
+      conf.githubUsername,
+      conf.githubRepository,
+      conf.githubAppId,
+      conf.githubAppInstallationId,
+      conf.githubAppPrivateKey,
+    )
   }
 }
 
@@ -16,46 +22,58 @@ export const deploy = async () => {
   await gh.dispatchWorkflow(conf.githubYaml, conf.githubBranch)
 }
 
+const headers = {
+  Accept: 'application/vnd.github.v3+json',
+  'User-Agent': 'githubapi',
+}
+
 export class GithubClient {
   private username: string
   private repository: string
-  private token: string
+  private appId: string
+  private installationId: string
+  private privateKey: string
 
-  constructor(username: string, repository: string, token: string) {
+  constructor(
+    username: string,
+    repository: string,
+    appId: string,
+    installationId: string,
+    privateKey: string,
+  ) {
     this.username = username
     this.repository = repository
-    this.token = token
+    this.appId = appId
+    this.installationId = installationId
+    this.privateKey = privateKey
   }
 
-  public dispatchWorkflow(yml: string, branch: string): Promise<void> {
-    const data = JSON.stringify({
-      ref: branch,
-    })
+  public async dispatchWorkflow(yml: string, branch: string): Promise<void> {
+    const token = await this.getInstallationToken()
+    await axios.post(
+      `https://api.github.com/repos/${this.username}/${this.repository}/actions/workflows/${yml}/dispatches`,
+      { ref: branch },
+      { headers: { ...headers, Authorization: `token ${token}` } },
+    )
+  }
 
-    const conf = loadConfig()
-    var options = {
-      method: 'POST',
-      url: `https://api.github.com/repos/${this.username}/${this.repository}/actions/workflows/${yml}/dispatches`,
-      headers: {
-        Accept: 'application/vnd.github.v3+json',
-        'Content-Type': 'application/json',
-        Authorization: `token ${conf.githubToken}`,
-        'Content-Length': data.length,
-        'User-Agent':
-          'githubapi',
-      },
-      body: data,
+  private async getInstallationToken(): Promise<string> {
+    const res = await axios.post(
+      `https://api.github.com/app/installations/${this.installationId}/access_tokens`,
+      {},
+      { headers: { ...headers, Authorization: `Bearer ${this.generateAppJwt()}` } },
+    )
+    return res.data.token
+  }
+
+  private generateAppJwt(): string {
+    const now = Math.floor(Date.now() / 1000)
+    const payload = {
+      // 時計のずれを許容するため60秒過去にする
+      iat: now - 60,
+      exp: now + 540,
+      iss: this.appId,
     }
-
-    return new Promise((resolve, reject) => {
-      request(options, function (error: Error, response: http.IncomingMessage) {
-        if (error) reject(error)
-        if (response.statusCode && response.statusCode >= 200 && response.statusCode < 300) {
-          resolve()
-        } else {
-          reject(new Error(`Request failed with status code ${response.statusCode}`))
-        }
-      })
-    })
+    return jwt.sign(payload, this.privateKey, { algorithm: 'RS256' })
   }
 }
